@@ -10,6 +10,10 @@ var rootCmd = &cobra.Command{
 	},
 }
 
+func init() {
+	rootCmd.CompletionOptions.DisableDefaultCmd = true
+}
+
 func main() {
 	rootCmd.Execute()
 }
