@@ -77,7 +77,7 @@ var generateCmd = &cobra.Command{
 		// If `posts/assets` exists, copy it to `dist/assets`
 		if _, err := os.Stat("posts/assets"); err == nil {
 			fmt.Println("Copying assets...")
-			err = cp.Copy("posts/assets", "dist/assets")
+			err = cp.Copy("assets", "dist/assets")
 			if err != nil {
 				fmt.Println(err.Error())
 				os.Exit(1)
