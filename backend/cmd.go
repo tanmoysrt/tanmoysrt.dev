@@ -146,8 +146,36 @@ var buildCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		// Create the posts directory
+		fmt.Println("Creating dist/posts directory...")
+		err = os.Mkdir("dist/posts", 0777)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+
 		fmt.Printf("Found %d posts\n", len(posts))
-		// // Compile landing page
+
+		fmt.Println("Compiling posts...")
+		for i, post := range posts {
+			posts[i].Route = fmt.Sprintf("/posts/%s", post.Slug) // Set route to /posts/:slug
+			fmt.Printf("[COMPILE] %s\n", post.Slug)
+			postPage, err := CompileTemplate(post, postTemplate)
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
+
+			fmt.Printf("[WRITE] %s\n", post.Slug)
+			err = os.WriteFile(fmt.Sprintf("dist/posts/%s.html", post.Slug), []byte(postPage), 0777)
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
+			fmt.Printf("[DONE] %s\n", post.Slug)
+		}
+
+		// Compile landing page
 		fmt.Println("Compiling landing page...")
 		landingPage, err := CompileTemplate(posts, landingTemplate)
 		if err != nil {
@@ -159,24 +187,6 @@ var buildCmd = &cobra.Command{
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(1)
-		}
-
-		fmt.Println("Compiling posts...")
-		for _, post := range posts {
-			fmt.Printf("[COMPILE] %s\n", post.Slug)
-			postPage, err := CompileTemplate(post, postTemplate)
-			if err != nil {
-				fmt.Println(err.Error())
-				os.Exit(1)
-			}
-
-			fmt.Printf("[WRITE] %s.html\n", post.Slug)
-			err = os.WriteFile(fmt.Sprintf("dist/%s.html", post.Slug), []byte(postPage), 0777)
-			if err != nil {
-				fmt.Println(err.Error())
-				os.Exit(1)
-			}
-			fmt.Printf("[DONE] %s\n", post.Slug)
 		}
 
 		// If `posts/assets` exists, copy it to `dist/assets`

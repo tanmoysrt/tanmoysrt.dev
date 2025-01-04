@@ -24,6 +24,7 @@ type Post struct {
 	Content       template.HTML `yaml:"-"`
 	Slug          string        `yaml:"-"` // derived from file base path
 	FilePath      string        `yaml:"-"`
+	Route         string        `yaml:"-"`
 }
 
 type PostList []Post

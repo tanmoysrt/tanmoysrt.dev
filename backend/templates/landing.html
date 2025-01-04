@@ -1,9 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
+    <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tanmoy Sarkar</title>
+    <meta property="og:title" content="Tanmoy Sarkar">
+    <meta property="og:site_name" content="Tanmoy Sarkar">
+    <meta name="description" content="Tanmoy Sarkar's Blog">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://tanmoysrt.dev/">
+    <meta rel="canonical" href="https://tanmoysrt.dev">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/general/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/general/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/general/favicon-16x16.png">
+    <link rel="icon" href="/assets/general/favicon.ico" type="image/x-icon" />
     <style>
       :root {
         color-scheme: dark;
@@ -180,7 +190,7 @@
             </svg>
           </a>
           {{else}}
-          <a href="/{{.Slug}}"> {{.Title}}</a>
+          <a href="{{.Route}}"> {{.Title}}</a>
           {{end}}
         </h4>
       </article>
