@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tanmoy Sarkar</title>
+    <style>
+      :root {
+        color-scheme: dark;
+
+        --background-color: #181a1b;
+        --text-color: #dcdcdc;
+
+        --link-color: #01ff70;
+        --link-focus-color: #00e65c;
+        --link-visited: #f1fa8c;
+        --link-visited-hover: #e3e57a;
+      }
+
+      /* Global */
+      * {
+        box-sizing: border-box;
+      }
+
+      /* body */
+      html,
+      body {
+        color: var(--text-color);
+        background-color: var(--background-color);
+        line-height: 1.4;
+      }
+
+      body {
+        max-width: 760px;
+        margin: 1.5em auto;
+        padding: 10px 10px;
+        font-family: "Ubuntu", "Arial", sans-serif;
+      }
+
+         /* a tag */
+         a {
+        color: var(--link-color);
+        background-color: transparent;
+        text-decoration: none;
+      }
+      a:hover,
+      a:focus,
+      a:active {
+        color: var(--link-focus-color);
+        text-decoration: underline;
+      }
+      a:visited {
+        color: var(--link-visited);
+      }
+      a:visited:hover {
+        color: var(--link-visited-hover);
+        text-decoration: underline;
+      }
+
+      .author-name {
+        color: #eaeaea;
+        text-align: center;
+        margin-top: 0.4rem;
+        margin-bottom: 0.4rem;
+      }
+
+      .author-bio {
+        color: #babdc4;
+        margin: 0 auto;
+        opacity: 0.9;
+        max-width: 393px;
+        line-height: 1.688;
+        text-align: center;
+      }
+
+      .post-list {
+        width: fit-content;
+        margin-top: 60px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .post-item {
+        display: flex;
+        width: auto;
+        align-items: first baseline;
+        padding-top: 5px;
+        padding-bottom: 6px;
+        flex-direction: row;
+        line-height: 1;
+        gap: 20px;
+      }
+
+      .post-item:not(:first-child) {
+        border-top: 1px solid #2c2e33;
+      }
+
+      .post-item time {
+        color: #babdc4;
+        flex-shrink: 0;
+      }
+
+      .post-item h4 {
+        width: fit-content;
+        margin: 0;
+        border: 0;
+        padding: 0;
+        line-height: 1.85;
+        font-size: 16px;
+        font-weight: 400;
+        letter-spacing: 0.1px;
+        color: #eaeaea;
+        display: block;
+      }
+
+      .post-item h4 a {
+        color: #babdc4;
+        text-decoration-color: #4a4d56;
+        text-decoration: none;
+        border: none;
+      }
+
+      .post-item h4 a:hover,
+      .post-item h4 a:focus,
+      .post-item h4 a:active {
+        color: #eaeaea;
+        text-decoration: underline;
+      }
+
+      .post-item h4 a:visited {
+        color: var(--link-visited);
+      }
+      .post-item h4 a:visited:hover {
+        color: var(--link-visited-hover);
+        text-decoration: underline;
+      }
+
+      nav {
+        margin-top: 60px;
+        width: 100%;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h2 class="author-name">Tanmoy Sarkar</h2>
+      <p class="author-bio">
+        👋 Hi! Let's explore
+      </p>
+    </header>
+    <div class="post-list">
+      {{range .}}
+      <article class="post-item">
+        <time datetime="{{.Date}}"> {{.FormattedDate}} </time>
+        <h4>
+          <a href="/{{.Slug}}">
+            {{.Title}}</a
+          >
+        </h4>
+      </article>
+      {{end}}
+    </div>
+
+    <footer>
+      <nav>
+        <a href="https://github.com/fdf">Github</a>
+        ·
+        <a href="https://www.linkedin.com/in/fdf/">LinkedIn</a>
+        ·
+        <a href="https://twitter.com/fdf">Twitter</a>
+        ·
+        <a href="https://fdf.dev">Website</a>
+      </nav>
+    </footer>
+  </body>
+</html>

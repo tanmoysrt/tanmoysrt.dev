@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{{.Title}} | Tanmoy Sarkar</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="GENERATOR"
+      content="github.com/gomarkdown/markdown markdown processor for Go"
+    />
+    <meta charset="utf-8" />
+    <style></style>
+    <style>
+      :root {
+        color-scheme: dark;
+
+        --background-color: #181a1b;
+        --text-color: #dcdcdc;
+
+        --header-color: #4facfe;
+
+        --time-color: #01ff70;
+        
+        --link-color: #01ff70;
+        --link-focus-color: #00e65c;
+        --link-visited: #f1fa8c;
+        --link-visited-hover: #e3e57a;
+        --blockquote-color: #4ade80;
+
+        --code-background-color: #0f1112;
+        --code-border-radius: 8px;
+      }
+
+      /* Global */
+      * {
+        box-sizing: border-box;
+      }
+
+      img,
+      canvas,
+      iframe,
+      video,
+      svg,
+      select,
+      textarea {
+        max-width: 100%;
+      }
+
+      /* body */
+      html,
+      body {
+        color: var(--text-color);
+        background-color: var(--background-color);
+        line-height: 1.4;
+      }
+
+      body {
+        max-width: 760px;
+        margin: 1.5em auto;
+        padding: 0 10px;
+        font-family: "Ubuntu", "Arial", sans-serif;
+      }
+
+      /* a tag */
+      a {
+        color: var(--link-color);
+        background-color: transparent;
+        text-decoration: none;
+      }
+      a:hover,
+      a:focus,
+      a:active {
+        color: var(--link-focus-color);
+        text-decoration: underline;
+      }
+      a:visited {
+        color: var(--link-visited);
+      }
+      a:visited:hover {
+        color: var(--link-visited-hover);
+        text-decoration: underline;
+      }
+
+      /* headers */
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        color: var(--header-color);
+      }
+
+      /* list */
+      main > ul {
+        list-style-type: none;
+        padding: 0;
+      }
+      main > ul > li {
+        display: grid;
+        grid-template-columns: fit-content(10em) 1fr;
+      }
+      main > ul > li > time {
+        color: var(--time-color);
+        padding-right: 1em;
+        min-width: 7em;
+      }
+
+      /* nav */
+      nav {
+        margin-top: 2rem;
+        text-align: center;
+      }
+
+      /* Image */
+      img {
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
+        max-width: 100%;
+        max-height: 100%;
+      }
+
+      /* Table */
+      table,
+      th,
+      td {
+        border: 1px solid;
+      }
+      table {
+        border-collapse: collapse;
+        padding: 0.1em;
+        margin: 0px auto;
+      }
+      th,
+      td {
+        padding: 0.1em 0.5em;
+      }
+
+      /* Blockquote */
+      blockquote {
+        border-left: 3px solid var(--blockquote-color);
+        padding-left: 1rem;
+        line-height: 1.25;
+        overflow-x: scroll;
+      }
+
+      /* Code Section */
+      pre {
+        background: var(--code-background-color) !important;
+        padding: 1rem;
+        border-radius: 8px;
+      }
+
+      pre code {
+        font-family: "Ubuntu Mono", "Consolas", "Monaco", monospace;
+        display: block;
+        overflow-x: auto;
+        padding: 0.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header><h2>{{.Title}}</h2></header>
+      <time datetime="{{.Date}}">{{.FormattedDate}}</time>
+
+      <article>
+        {{.Content}}
+      </article>
+
+      <footer>
+        <nav>
+            <a href="https://github.com/fdf">Github</a>
+            ·
+            <a href="https://www.linkedin.com/in/fdf/">LinkedIn</a>
+            ·
+            <a href="https://twitter.com/fdf">Twitter</a>
+            ·
+            <a href="https://fdf.dev">Website</a>
+        </nav>
+      </footer>
+    </main>
+
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+  </body>
+</html>
