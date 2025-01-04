@@ -205,6 +205,20 @@ var buildCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		// Generate RSS feed
+		fmt.Println("Generating RSS feed...")
+		rss, err := GenerateRSS(posts)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		// Write to file
+		err = os.WriteFile("dist/rss.xml", []byte(rss), 0777)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+
 		// If `posts/assets` exists, copy it to `dist/assets`
 		if _, err := os.Stat("assets"); err == nil {
 			fmt.Println("Copying assets...")

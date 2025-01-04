@@ -33,7 +33,6 @@ type Post struct {
 type PostList []Post
 
 // Sitemap related
-
 type Sitemap struct {
 	XMLName xml.Name     `xml:"urlset"`
 	XMLNS   string       `xml:"xmlns,attr"`
@@ -45,4 +44,36 @@ type SitemapURL struct {
 	LastMod    string `xml:"lastmod"`
 	ChangeFreq string `xml:"changefreq"`
 	Priority   string `xml:"priority"`
+}
+
+// RSS related
+type RSS struct {
+	XMLName xml.Name   `xml:"rss"`
+	XMLNS   string     `xml:"xmlns:atom,attr"`
+	Version string     `xml:"version,attr"`
+	Channel RSSChannel `xml:"channel"`
+}
+
+type RSSChannel struct {
+	Title       string    `xml:"title"`
+	Link        string    `xml:"link"`
+	Description string    `xml:"description"`
+	PubDate     string    `xml:"pubDate"`
+	TTL         int       `xml:"ttl"` // Added TTL field
+	AtomLink    AtomLink  `xml:"atom:link"`
+	Items       []RSSItem `xml:"item"`
+}
+
+type RSSItem struct {
+	Title       string `xml:"title"`
+	Link        string `xml:"link"`
+	Description string `xml:"description"`
+	PubDate     string `xml:"pubDate"`
+	GUID        string `xml:"guid"` // Added GUID field
+}
+
+type AtomLink struct {
+	Href string `xml:"href,attr"`
+	Rel  string `xml:"rel,attr"`
+	Type string `xml:"type,attr"`
 }
