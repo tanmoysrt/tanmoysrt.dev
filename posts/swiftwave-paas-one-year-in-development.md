@@ -1,6 +1,6 @@
 ---
 title: "Swiftwave PaaS: One Year in Development"
-description: "Write your description here"
+description: "Building a lightweight open-source PaaS platform from scratch"
 date: "2024-06-24"
 is_redirect: false
 redirect_url:
