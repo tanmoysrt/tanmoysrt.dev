@@ -12,11 +12,11 @@ It's the ability of a piece of code to automatically update or re-render in resp
 
 Let's try to understand clearly by ⏬
 
-![Initial State](assets/reactivity-in-javascript/initial-state.avif)
+![Initial State](/assets/reactivity-in-javascript/initial-state.avif)
 
 **Selling Price** and **Buying Price** are two state variables on which the value of Profit depends.
 
-![Explanation](assets/reactivity-in-javascript/explanation.avif)
+![Explanation](/assets/reactivity-in-javascript/explanation.avif)
 
 **In the case of a Reactive System,**
 
@@ -165,7 +165,7 @@ console.log(data.buyingPrice);
 
 Output -
 
-![Image description](assets/reactivity-in-javascript/output.avif)
+![Image description](/assets/reactivity-in-javascript/output.avif)
 
 ### **Step 3: Create a watch function to make the process a little bit easy**
 
