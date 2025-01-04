@@ -101,6 +101,15 @@ var newPostCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		fmt.Printf("Post %s created successfully\n", postFileName)
+		// Create assets directory for the post
+		assetsDir := fmt.Sprintf("assets/%s", generatedSlug)
+		fmt.Printf("Creating assets directory %s...\n", assetsDir)
+		err = os.MkdirAll(assetsDir, 0777)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		fmt.Printf("Assets directory %s created successfully\n", assetsDir)
 	},
 }
 
