@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gosimple/slug"
+	cp "github.com/otiai10/copy"
 	"github.com/spf13/cobra"
 )
 
@@ -170,13 +171,11 @@ var buildCmd = &cobra.Command{
 		}
 
 		// If `posts/assets` exists, copy it to `dist/assets`
-		if _, err := os.Stat("posts/assets"); err == nil {
+		if _, err := os.Stat("assets"); err == nil {
 			fmt.Println("Copying assets...")
-			cmd := exec.Command("cp", "-r", "assets/*", "dist/assets")
-			cmd.Stderr = os.Stderr
-			cmd.Run()
-			if cmd.ProcessState.ExitCode() != 0 {
-				fmt.Println("Error copying assets")
+			err := cp.Copy("assets", "dist/assets")
+			if err != nil {
+				fmt.Println(err.Error())
 				os.Exit(1)
 			}
 		}
