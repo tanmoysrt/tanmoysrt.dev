@@ -33,7 +33,7 @@
         --link-focus-color: #00e65c;
         --link-visited: #f1fa8c;
         --link-visited-hover: #e3e57a;
-        --blockquote-color: #4ade80;
+        --blockquote-color: #01ff70;
 
         --code-background-color: #0f1112;
         --code-border-radius: 8px;
@@ -105,18 +105,8 @@
       }
 
       /* list */
-      main > ul {
-        list-style-type: none;
-        padding: 0;
-      }
-      main > ul > li {
-        display: grid;
-        grid-template-columns: fit-content(10em) 1fr;
-      }
-      main > ul > li > time {
-        color: var(--time-color);
-        padding-right: 1em;
-        min-width: 7em;
+      main > article > ul {
+        padding-left: 2rem!important;
       }
 
       /* nav */
@@ -159,6 +149,7 @@
       blockquote {
         border-left: 3px solid var(--blockquote-color);
         padding-left: 1rem;
+        margin: 1rem!important;
         line-height: 1.25;
         overflow-x: scroll;
       }
@@ -175,6 +166,13 @@
         display: block;
         overflow-x: auto;
         padding: 0.5rem;
+      }
+
+      /* for mobile device  */
+      @media screen and (max-width: 500px) {
+        code {
+          font-size: 0.85em!important;
+        }
       }
     </style>
   </head>
