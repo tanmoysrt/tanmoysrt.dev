@@ -172,7 +172,7 @@ var buildCmd = &cobra.Command{
 		// If `posts/assets` exists, copy it to `dist/assets`
 		if _, err := os.Stat("posts/assets"); err == nil {
 			fmt.Println("Copying assets...")
-			cmd := exec.Command("cp", "-r", "assets", "dist/assets")
+			cmd := exec.Command("cp", "-r", "assets/*", "dist/assets")
 			cmd.Stderr = os.Stderr
 			cmd.Run()
 			if cmd.ProcessState.ExitCode() != 0 {
