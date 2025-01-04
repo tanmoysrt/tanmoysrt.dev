@@ -13,7 +13,9 @@ From last year (July~August), I am working on an open source PaaS to deploy and 
 SwiftWave is a self-hosted lightweight PaaS solution to deploy and manage your applications on any VPS.
 
 Website - https://swiftwave.org/
+
 Github - https://github.com/swiftwave-org/swiftwave
+
 If you like the intiative give it a ⭐ star in GitHub.
 
 ## Why did I decide to start developing this open source PaaS?
@@ -131,5 +133,7 @@ There's still lot of rooms for improvement in Swiftwave to make it an even more 
 ---
 
 Website - https://swiftwave.org/
+
 Github - https://github.com/swiftwave-org/swiftwave
-If you like the intiative give it a ⭐ star in GitHub.
+
+If you like the initiative give it a ⭐ star in GitHub.
