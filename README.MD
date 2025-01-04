@@ -7,6 +7,7 @@ It compile markdown to html code and help to deploy blogs easily.
 1. Run `install.sh` to set it up locally.
 2. Few commands -
    - `blogger new` > Create new post
+   - `blogger dev` > Start a dev server at port 4000. Auto build on reload.
    - `blogger build` > To build the blog locally
    - `blogger sync` > To pull and push changes in posts to git
    - `blogger deploy` > To deploy the site in netlify

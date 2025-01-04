@@ -6,7 +6,7 @@ is_redirect: false
 redirect_url:
 ---
 
-## 👀 What is Reactivity?
+## 👀 What is Reactivity ?
 
 It's the ability of a piece of code to automatically update or re-render in response to changes in the data it is bound to.
 

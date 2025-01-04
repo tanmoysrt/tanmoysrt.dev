@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"text/template"
 	"time"
 
@@ -17,10 +18,12 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(buildCmd)
-	rootCmd.AddCommand(deployCmd)
+	rootCmd.Flags().SortFlags = false
 	rootCmd.AddCommand(newPostCmd)
+	rootCmd.AddCommand(devCmd)
+	rootCmd.AddCommand(buildCmd)
 	rootCmd.AddCommand(syncCmd)
+	rootCmd.AddCommand(deployCmd)
 }
 
 func validatePath() error {
@@ -354,5 +357,80 @@ var deployCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		fmt.Println("Site deployed successfully")
+	},
+}
+
+var devCmd = &cobra.Command{
+	Use:   "dev",
+	Short: "Start development server",
+	Long:  `Serve content from dist folder and rebuild on changes`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := validatePath(); err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+
+		// Initial build
+		buildCmd.Run(nil, nil)
+
+		// Start file watcher
+		go func() {
+			for {
+				time.Sleep(time.Second * 5)
+				changes := false
+
+				// Check md files
+				mdFiles, _ := filepath.Glob("*.md")
+				for _, file := range mdFiles {
+					if stat, err := os.Stat(file); err == nil {
+						if stat.ModTime().After(time.Now().Add(-time.Second)) {
+							changes = true
+							break
+						}
+					}
+				}
+
+				// Check assets
+				if !changes {
+					err := filepath.Walk("assets", func(path string, info os.FileInfo, err error) error {
+						if err != nil {
+							return err
+						}
+						if info.ModTime().After(time.Now().Add(-time.Second)) {
+							changes = true
+							return filepath.SkipAll
+						}
+						return nil
+					})
+					if err != nil && !os.IsNotExist(err) {
+						fmt.Printf("Error watching assets: %v\n", err)
+					}
+				}
+
+				if changes {
+					fmt.Println("\nChanges detected, rebuilding...")
+					buildCmd.Run(nil, nil)
+				}
+			}
+		}()
+
+		// Start HTTP server with URL rewriting
+		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			path := r.URL.Path
+			// If path doesn't end with .html and file doesn't exist, try adding .html
+			if !strings.HasSuffix(path, ".html") {
+				htmlPath := path + ".html"
+				if _, err := os.Stat("dist" + htmlPath); err == nil {
+					r.URL.Path = htmlPath
+				}
+			}
+			http.FileServer(http.Dir("dist")).ServeHTTP(w, r)
+		})
+
+		fmt.Println("Development server started at http://localhost:4000")
+		if err := http.ListenAndServe(":4000", nil); err != nil {
+			fmt.Printf("Server error: %v\n", err)
+			os.Exit(1)
+		}
 	},
 }
