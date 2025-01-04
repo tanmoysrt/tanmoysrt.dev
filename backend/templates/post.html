@@ -24,10 +24,11 @@
         --background-color: #181a1b;
         --text-color: #dcdcdc;
 
-        --header-color: #4facfe;
+        --header-color: #2ecc40;
 
         --time-color: #01ff70;
         
+        --footer-link-color: #2ecc40;
         --link-color: #01ff70;
         --link-focus-color: #00e65c;
         --link-visited: #f1fa8c;
@@ -98,6 +99,11 @@
         color: var(--header-color);
       }
 
+      /* time */
+      main > time {
+        font-weight: bold;
+      }
+
       /* list */
       main > ul {
         list-style-type: none;
@@ -117,6 +123,10 @@
       nav {
         margin-top: 2rem;
         text-align: center;
+      }
+
+      nav a {
+        color: var(--footer-link-color);
       }
 
       /* Image */
@@ -179,13 +189,13 @@
 
       <footer>
         <nav>
-            <a href="https://github.com/fdf">Github</a>
-            ·
-            <a href="https://www.linkedin.com/in/fdf/">LinkedIn</a>
-            ·
-            <a href="https://twitter.com/fdf">Twitter</a>
-            ·
-            <a href="https://fdf.dev">Website</a>
+          <a href="https://github.com/tanmoysrt">Github</a>
+          ·
+          <a href="mailto:tanmoy@swiftwave.org">Email</a>
+          ·
+          <a href="https://www.linkedin.com/in/tanmoysrt/">LinkedIn</a>
+          ·
+          <a href="https://x.com/twitter">Twitter</a>
         </nav>
       </footer>
     </main>
