@@ -9,4 +9,4 @@ echo "Project built successfully!"
 # Move the binary to current directory
 cd ..
 echo "Move blogger to /usr/bin"
-mv backend/blogger /usr/bin
+sudo mv backend/blogger /usr/bin
