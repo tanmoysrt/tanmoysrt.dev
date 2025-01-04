@@ -51,7 +51,8 @@ func ParseInfoAndContent(content string) (*Post, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error parsing date: %v", err)
 	}
-	post.FormattedDate = parsedDate.Format("January 2, 2006")
+	post.DateObj = &parsedDate
+	post.FormattedDate = parsedDate.Format("Jan 2, 2006")
 
 	// convert content to HTML
 	post.Content = template.HTML(markdownToHTML(strings.TrimSpace(parts[1])))

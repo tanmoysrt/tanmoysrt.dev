@@ -2,6 +2,7 @@ package main
 
 import (
 	"html/template"
+	"time"
 
 	_ "embed"
 )
@@ -13,9 +14,12 @@ var landingTemplate string
 var postTemplate string
 
 type Post struct {
-	Title         string
-	Description   string
-	Date          string
+	Title         string        `yaml:"title"`
+	Description   string        `yaml:"description"`
+	Date          string        `yaml:"date"`
+	DateObj       *time.Time    `yaml:"-"`
+	IsRedirect    bool          `yaml:"is_redirect"`
+	RedirectURL   string        `yaml:"redirect_url"`
 	FormattedDate string        `yaml:"-"`
 	Content       template.HTML `yaml:"-"`
 	Slug          string        `yaml:"-"` // derived from file base path

@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/tdewolff/minify"
 	"github.com/tdewolff/minify/css"
@@ -68,5 +69,11 @@ func ReadPosts() (PostList, error) {
 		}
 		posts = append(posts, *post)
 	}
+
+	// Sort by date desc
+	sort.Slice(posts, func(i, j int) bool {
+		return posts[i].DateObj.After(*posts[j].DateObj)
+	})
+
 	return posts, nil
 }
