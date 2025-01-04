@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,14 +12,15 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(generateCmd)
+	rootCmd.AddCommand(buildCmd)
+	rootCmd.AddCommand(deployCmd)
 	rootCmd.AddCommand(syncCmd)
 }
 
-var generateCmd = &cobra.Command{
-	Use:   "generate",
-	Short: "Generate static HTML from markdown files",
-	Long:  `Generate static HTML from markdown files in the dist directory`,
+var buildCmd = &cobra.Command{
+	Use:   "build",
+	Short: "Build static HTML site from markdown files",
+	Long:  `Build static HTML site from markdown files in the dist directory`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Read posts
 		fmt.Println("Reading posts...")
@@ -161,5 +163,81 @@ var syncCmd = &cobra.Command{
 		}
 
 		fmt.Println("Sync completed successfully!")
+	},
+}
+
+var deployCmd = &cobra.Command{
+	Use:   "deploy",
+	Short: "Deploy the site to Netlify",
+	Long:  `Deploy the site to Netlify`,
+	Run: func(cmd *cobra.Command, args []string) {
+		// check for required environment variables
+		NETLIFY_TOKEN := os.Getenv("NETLIFY_TOKEN")
+		NETLIFY_BLOG_SITE_ID := os.Getenv("NETLIFY_BLOG_SITE_ID")
+		if NETLIFY_TOKEN == "" {
+			fmt.Println("NETLIFY_TOKEN environment variable not set")
+			os.Exit(1)
+		}
+		if NETLIFY_BLOG_SITE_ID == "" {
+			fmt.Println("NETLIFY_BLOG_SITE_ID environment variable not set")
+			os.Exit(1)
+		}
+		// check for zip utility
+		_, err := exec.LookPath("zip")
+		if err != nil {
+			fmt.Println("zip utility not found. Please install zip utility")
+			os.Exit(1)
+		}
+
+		// build the site
+		buildCmd.Run(nil, nil)
+
+		// create zip file of dist directory
+		if _, err := os.Stat("dist"); err != nil {
+			fmt.Println("dist directory not found")
+			os.Exit(1)
+		}
+		fmt.Println("Creating zip file...")
+		_ = os.Remove("dist.zip")
+		zipCmd := exec.Command("zip", "-r", "dist.zip", ".", "-i", "dist/*")
+		err = zipCmd.Run()
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		defer os.Remove("dist.zip")
+		// deploy the site
+		fmt.Println("Deploying site to Netlify...")
+
+		httpClient := &http.Client{}
+		req, err := http.NewRequest("POST", fmt.Sprintf("https://api.netlify.com/api/v1/sites/%s/deploys", NETLIFY_BLOG_SITE_ID), nil)
+		if err != nil {
+			fmt.Println("Error creating request")
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		req.Header.Set("Content-Type", "application/zip")
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", NETLIFY_TOKEN))
+		// read zip file
+		zipFile, err := os.Open("dist.zip")
+		if err != nil {
+			fmt.Println("Error reading zip file")
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		defer zipFile.Close()
+		req.Body = zipFile
+		response, err := httpClient.Do(req)
+		if err != nil {
+			fmt.Println("Error deploying site")
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		if response.StatusCode != 200 {
+			fmt.Println("Error deploying site")
+			fmt.Println(response.Status)
+			os.Exit(1)
+		}
+		fmt.Println("Site deployed successfully")
 	},
 }
