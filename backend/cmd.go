@@ -1,12 +1,17 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"text/template"
+	"time"
 
+	"github.com/gosimple/slug"
 	cp "github.com/otiai10/copy"
 	"github.com/spf13/cobra"
 )
@@ -14,7 +19,89 @@ import (
 func init() {
 	rootCmd.AddCommand(buildCmd)
 	rootCmd.AddCommand(deployCmd)
+	rootCmd.AddCommand(newPostCmd)
 	rootCmd.AddCommand(syncCmd)
+}
+
+func validatePath() error {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("error getting current working directory: %v", err)
+	}
+	// Check if we're in posts directory and move up if needed
+	if filepath.Base(cwd) != "posts" {
+		return fmt.Errorf("please run this command from the posts directory")
+	}
+	return nil
+}
+
+var newPostTemplate = `
+---
+title: "{{ .Title }}"
+description: "Write your description here"
+date: "{{ .Date }}"
+is_redirect: false
+redirect_url: 
+---
+
+Write your post here
+`
+
+var newPostCmd = &cobra.Command{
+	Use:   "new",
+	Short: "Create a new post",
+	Long:  `Create a new post in the posts directory`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := validatePath(); err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		// Ask for post title
+		var title string
+		scanner := bufio.NewScanner(os.Stdin)
+		fmt.Println("Enter post title: ")
+		fmt.Print("> ")
+		if scanner.Scan() {
+			line := scanner.Text()
+			fmt.Printf("Input was: %q\n", line)
+			title = line
+		} else {
+			fmt.Println("Error reading input")
+			os.Exit(1)
+		}
+
+		// If title is empty, exit
+		if title == "" {
+			fmt.Println("Post title cannot be empty")
+			os.Exit(1)
+		}
+
+		generatedSlug := slug.Make(title)
+		postFileName := fmt.Sprintf("%s.md", generatedSlug)
+
+		// Create post file
+		fmt.Printf("Creating post %s...\n", postFileName)
+		t, err := template.New("post").Parse(newPostTemplate)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		var buf bytes.Buffer
+		err = t.Execute(&buf, map[string]string{
+			"Title": title,
+			"Date":  time.Now().Format("2006-01-02"),
+		})
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		err = os.WriteFile(postFileName, buf.Bytes(), 0777)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		fmt.Printf("Post %s created successfully\n", postFileName)
+	},
 }
 
 var buildCmd = &cobra.Command{
@@ -22,6 +109,10 @@ var buildCmd = &cobra.Command{
 	Short: "Build static HTML site from markdown files",
 	Long:  `Build static HTML site from markdown files in the dist directory`,
 	Run: func(cmd *cobra.Command, args []string) {
+		if err := validatePath(); err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
 		// Read posts
 		fmt.Println("Reading posts...")
 		posts, err := ReadPosts()
@@ -96,6 +187,10 @@ var syncCmd = &cobra.Command{
 	Short: "Sync posts with a git repository",
 	Long:  `Sync posts with a git repository`,
 	Run: func(cmd *cobra.Command, args []string) {
+		if err := validatePath(); err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
 		// Get current working directory
 		cwd, err := os.Getwd()
 		if err != nil {
@@ -103,15 +198,12 @@ var syncCmd = &cobra.Command{
 			return
 		}
 
-		// Check if we're in posts directory and move up if needed
-		if filepath.Base(cwd) == "posts" {
-			err = os.Chdir("..")
-			if err != nil {
-				fmt.Printf("Error moving up directory: %v\n", err)
-				return
-			}
-			defer os.Chdir(cwd) // Return to original directory when done
+		err = os.Chdir("..")
+		if err != nil {
+			fmt.Printf("Error moving up directory: %v\n", err)
+			return
 		}
+		defer os.Chdir(cwd) // Return to original directory when done
 
 		// Initialize git command executor
 		git := func(args ...string) error {
@@ -171,6 +263,10 @@ var deployCmd = &cobra.Command{
 	Short: "Deploy the site to Netlify",
 	Long:  `Deploy the site to Netlify`,
 	Run: func(cmd *cobra.Command, args []string) {
+		if err := validatePath(); err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
 		// check for required environment variables
 		NETLIFY_TOKEN := os.Getenv("NETLIFY_TOKEN")
 		NETLIFY_BLOG_SITE_ID := os.Getenv("NETLIFY_BLOG_SITE_ID")
