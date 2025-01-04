@@ -37,8 +37,8 @@
         font-family: "Ubuntu", "Arial", sans-serif;
       }
 
-         /* a tag */
-         a {
+      /* a tag */
+      a {
         color: var(--link-color);
         background-color: transparent;
         text-decoration: none;
@@ -55,6 +55,12 @@
       a:visited:hover {
         color: var(--link-visited-hover);
         text-decoration: underline;
+      }
+
+      .redirect-link {
+        display: flex;
+        align-items: center;
+        gap: 4px;
       }
 
       .author-name {
@@ -145,18 +151,37 @@
   <body>
     <header>
       <h2 class="author-name">Tanmoy Sarkar</h2>
-      <p class="author-bio">
-        👋 Hi! Let's explore
-      </p>
+      <p class="author-bio">👋 Hi! Let's explore</p>
     </header>
     <div class="post-list">
       {{range .}}
       <article class="post-item">
         <time datetime="{{.Date}}"> {{.FormattedDate}} </time>
         <h4>
-          <a href="/{{.Slug}}">
-            {{.Title}}</a
-          >
+          {{if .IsRedirect}}
+          <a href="{{.RedirectURL}}" target="_blank" class="redirect-link">
+            {{.Title}}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M15 3h6v6" />
+              <path d="M10 14 21 3" />
+              <path
+                d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+              />
+            </svg>
+          </a>
+          {{else}}
+          <a href="/{{.Slug}}"> {{.Title}}</a>
+          {{end}}
         </h4>
       </article>
       {{end}}
