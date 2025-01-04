@@ -160,8 +160,7 @@ var buildCmd = &cobra.Command{
 		fmt.Printf("Found %d posts\n", len(posts))
 
 		fmt.Println("Compiling posts...")
-		for i, post := range posts {
-			posts[i].Route = fmt.Sprintf("/posts/%s", post.Slug) // Set route to /posts/:slug
+		for _, post := range posts {
 			fmt.Printf("[COMPILE] %s\n", post.Slug)
 			postPage, err := CompileTemplate(post, postTemplate)
 			if err != nil {
@@ -187,6 +186,20 @@ var buildCmd = &cobra.Command{
 		}
 		// Write to file
 		err = os.WriteFile("dist/index.html", []byte(landingPage), 0777)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+
+		// Generate sitemap
+		fmt.Println("Generating sitemap...")
+		sitemap, err := GenerateSitemap(posts)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		// Write to file
+		err = os.WriteFile("dist/sitemap.xml", []byte(sitemap), 0777)
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(1)

@@ -67,6 +67,7 @@ func ReadPosts() (PostList, error) {
 		if len(post.Slug) > 3 && post.Slug[len(post.Slug)-3:] == ".md" {
 			post.Slug = post.Slug[:len(post.Slug)-3]
 		}
+		post.Route = fmt.Sprintf("/posts/%s", post.Slug) // Set route to /posts/:slug
 		posts = append(posts, *post)
 	}
 
