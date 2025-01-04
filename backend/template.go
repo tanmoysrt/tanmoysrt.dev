@@ -42,9 +42,11 @@ func ReadPosts() (PostList, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error getting current working directory: %v", err)
 	}
-	postsPath := filepath.Join(currentPath, "posts")
+	if filepath.Base(currentPath) != "posts" {
+		return nil, fmt.Errorf("please run this command from the posts directory")
+	}
 	// find all markdown files in the posts directory
-	files, err := filepath.Glob(filepath.Join(postsPath, "*.md"))
+	files, err := filepath.Glob(filepath.Join(currentPath, "*.md"))
 	if err != nil {
 		return nil, fmt.Errorf("error reading posts directory: %v", err)
 	}

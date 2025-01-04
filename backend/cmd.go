@@ -17,36 +17,43 @@ var generateCmd = &cobra.Command{
 	Short: "Generate static HTML from markdown files",
 	Long:  `Generate static HTML from markdown files in the dist directory`,
 	Run: func(cmd *cobra.Command, args []string) {
+		// Read posts
+		fmt.Println("Reading posts...")
+		posts, err := ReadPosts()
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		// Remove dist directory if it exists
 		_ = os.RemoveAll("dist")
 		// Create dist directory
 		fmt.Println("Creating dist directory...")
-		err := os.Mkdir("dist", 0777)
+		err = os.Mkdir("dist", 0777)
 		if err != nil {
-			panic(err)
+			fmt.Println(err.Error())
+			os.Exit(1)
 		}
 		// Create the assets directory
 		fmt.Println("Creating dist/assets directory...")
 		err = os.Mkdir("dist/assets", 0777)
 		if err != nil {
-			panic(err)
+			fmt.Println(err.Error())
+			os.Exit(1)
 		}
-		// Read posts
-		fmt.Println("Reading posts...")
-		posts, err := ReadPosts()
-		if err != nil {
-			panic(err)
-		}
+
 		fmt.Printf("Found %d posts\n", len(posts))
 		// // Compile landing page
 		fmt.Println("Compiling landing page...")
 		landingPage, err := CompileTemplate(posts, landingTemplate)
 		if err != nil {
-			panic(err)
+			fmt.Println(err.Error())
+			os.Exit(1)
 		}
 		// Write to file
 		err = os.WriteFile("dist/index.html", []byte(landingPage), 0777)
 		if err != nil {
-			panic(err)
+			fmt.Println(err.Error())
+			os.Exit(1)
 		}
 
 		fmt.Println("Compiling posts...")
@@ -54,13 +61,15 @@ var generateCmd = &cobra.Command{
 			fmt.Printf("[COMPILE] %s\n", post.Slug)
 			postPage, err := CompileTemplate(post, postTemplate)
 			if err != nil {
-				panic(err)
+				fmt.Println(err.Error())
+				os.Exit(1)
 			}
 
 			fmt.Printf("[WRITE] %s.html\n", post.Slug)
 			err = os.WriteFile(fmt.Sprintf("dist/%s.html", post.Slug), []byte(postPage), 0777)
 			if err != nil {
-				panic(err)
+				fmt.Println(err.Error())
+				os.Exit(1)
 			}
 			fmt.Printf("[DONE] %s\n", post.Slug)
 		}
@@ -70,7 +79,8 @@ var generateCmd = &cobra.Command{
 			fmt.Println("Copying assets...")
 			err = cp.Copy("posts/assets", "dist/assets")
 			if err != nil {
-				panic(err)
+				fmt.Println(err.Error())
+				os.Exit(1)
 			}
 		}
 	},
