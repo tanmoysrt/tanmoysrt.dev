@@ -21,9 +21,7 @@ mysqldump \
   > backup.sql
 ```
 
-This works fine.
-
-### Issues
+This works fine, but as your database grows, there are some challenges that come with using this method.
 
 1. **High Disk I/O :** When backing up your large database, MariaDB needs to read all data from disk and convert each table/row into SQL queries. As your database grows:
 	- The database need to perform more work
