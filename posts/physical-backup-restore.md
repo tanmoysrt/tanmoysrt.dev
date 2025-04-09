@@ -7,7 +7,8 @@ redirect_url:
 ---
 
 
-In Frappe Cloud, every **Site Update** triggers an automatic backup - ensuring your data stays safe in case of failures and we can rollback your site to older version as soon as possible.
+---
+In Frappe Cloud, every site update triggers an automatic backup - ensuring your data stays safe in case of failures and we can rollback your site to older version as soon as possible.
 
 As of now, we use `mysqldump` to take logical backup your site's database.
 
@@ -20,7 +21,7 @@ mysqldump \
   > backup.sql
 ```
 
-This works fine !
+This works fine.
 
 ### Issues
 
@@ -44,74 +45,53 @@ This works fine !
 	If you have some site with more than 10GB of database size, you need to wait ~10 minutes before even starting with actual update.
 
 
-	> BTW, Frappe Cloud gives you an option to **Skip Backup** as well. 
+	> BTW, Frappe Cloud gives you an option to skip backup as well. 
 	> 
 	> But that's like playing with 🔥 in a production site. If something goes wrong, you need to fix it on production yourself. Resulted in more downtime.
 
     <p align="center">
-        <img style="max-width: 300px" src="/files/meme435384.png" />
+        <img style="max-width: 300px" src="https://frappe.io/files/meme435384.png" />
     </p>
 
 
-### Simple Solution - Take Disk Snapshot
+### Simple Solution - Disk Snapshot
 
-Just take disk snapshot of database server because AWS EBS Snapshot, ZFS Snapshot is just a few seconds operation.
+Taking a disk snapshot of the database server, such as AWS EBS or ZFS Snapshot, is a quick process that usually takes just a few seconds. Technically, this is considered a physical backup of the database.
 
-Technically, we have just did **Physical Backup** of database.
+However, there’s an issue with this approach. A running database server always has data in memory. If you take a snapshot without stopping the database, it can result in corrupted files. To avoid this, the database needs to be stopped before taking a snapshot.
 
-But there is an **issue** with this approach -
-
-Running Database Server always has some data in memory. So, if we just take snapshot without stopping the database server, we will end-up with some corrupted files.
-
-So, we need to stop database for this.
-
-Meanwhile, on Frappe Cloud on each database server, we have hundreds of database running.
+This is especially challenging on Frappe Cloud, where each database server hosts hundreds of databases. Shutting down the entire server just to back up one database is not feasible.
 
 ![](https://frappe.io/files/fc-db-infra.png)
 
-So, It's impossible to shut down database server to backup one database.
+
 
 ### Solution To Physical Backup
 
-To create a safe physical backup, we need to ensure two things -
+To create a safe physical backup, we need to ensure two things :
 
 1. There should be no activity in that specific database while taking snapshot.
-2. Database should commit all data from memory to disk.
+2. The database should commit all data from memory to disk.
 
-**Solution to Problem 1** -
+#### Solution to Problem 1
 
-Take Read Write lock on the database to ensure no activity on database tables.
+To prevent activity, take a **Read-Write lock** on the database. This ensures that no changes occur to the database tables while the snapshot is being taken.
 
-**Solution to Problem 2** - 
+#### Solution to Problem 2
 
-This depends on storage engine. MariaDB has different storage engines like InnoDB, MyISAM, Area, NBD which handle the storage mechanisms.
+This solution depends on the storage engine being used. MariaDB has multiple storage engines, including InnoDB and MyISAM, which handle storage in different ways.
 
-Out of these engines, most popular ones for MariaDB are - 
+- **InnoDB:** Each table is a separate tablespace, and every table has an associated \*.ibd file that holds the actual data. InnoDB also supports Transportable Tablespace, allowing you to export and import tablespaces even in a live database.
+- **MyISAM:** Each table consists of two files: \*.MYI (index) and \*.MYD (data).
 
-- InnoDB
-- MyISAM
-
-In InnoDB, every table is considered as tablespace. Each InnoDB tables has one file in disk
-- **\*.ibd** - This file hold actual data of your tables. This is the file we need to backup mainly.
-
-InnoDB has support for **Transportable Tablespace**. That means we can export and import tablespace in live database.
-
-For MyISAM, there is no concept of tablespace. Each MyISAM table contains two files
-- **\*.MYI** - Index for the stored data
-- **\*.MYD** - Actual data
-
-MariaDB provides a single SQL query, which can solve problem 1 & 2 together.
-
-Open a terminal and run,
+MariaDB provides a single SQL query that can solve both problems:
 ```
 FLUSH TABLES `tabUser`, `__global_search`, `tabVersion` FOR EXPORT
 ```
 
-> Don't close the terminal or connection until unless you have backed up the files.
+> Make sure to keep the terminal open until the backup is complete.
 
-This will take lock on database and flush on-the-fly data to disk. So that we can copy the data.
-
-At this point, if you take a look at the database folder you will find different kind of files.
+This command locks the database and flushes the data to disk, making it safe to copy. Once done, you can backup the required files from the database folder. For example:
 ```list
 /var/lib/mysql/
 	|- _cdsd32dsvn92
@@ -124,94 +104,139 @@ At this point, if you take a look at the database folder you will find different
 		...
 ```
 
-Out of this, **\*.cfg** file is the new one for InnoDB. It's important to import the tablespace back in another database server. That file holds information about your **\*ibd** files.
+Note that the \*.cfg* file is generated for InnoDB tables and must be backed up. It’s required for importing the tablespace into another database server.
 
-We have now all the data with us. But, we are missing one thing still. If you just look inside your database servers `/var/lib/mysql/` folder, you will find many **\*.frm** file in sub-directories.
-
-This **\*.frm** files hold the structure and column definitions of a table but these are not importable in live database 😢.
-
- So, we need to take backup of table structure to recreate them back later. We can use mysqldump for that purpose.
+However, you’re still missing one crucial thing. Inside the `/var/lib/mysql/` folder, there are \.frm* files that hold the structure and column definitions of the tables, but they are not importable in a live database. To backup the table structure, use `mysqldump`:
 
 ```
 mysqldump _cdsd32dsvn92 --no-data > schema.sql
 ```
 
-You can either now take disk snapshot or copy those files to another directory/disk/remote server whatever you prefer .
+Once you've backed up the data and structure, you can either take a disk snapshot or copy the files to another directory, disk, or remote server.
 
-_FYI, In Frappe Cloud, currently we are using AWS EBS Snapshot for physical backup purpose. Because EBS Snapshot is time consistent and take 3~5 seconds to create._
+**Note:** In Frappe Cloud, we currently use AWS EBS Snapshots for physical backups because they are time-consistent and take only 3-5 seconds to create.
 
-🎉 Finally, we have our physical backup ready which consists the data + table definitions.
+🎉 With that, we now have a complete physical backup, including both data and table definitions.
 
 ### Time For Physical Restoration
 
-We will first take the simple approach to do the restoration and later will discuss about each problem and their solution.
+Let’s start with a simplest approach to restoration, and later, we’ll address each problem and its solution in more detail.
 
-**Steps -**
+#### Steps
 
-1. **Download Backup :** Before restoration, ensure you have the physical backup ready.
-	- If using an **EBS / Disk Snapshot**, create a volume from it and mount it on your server.
-	- For other backup types, download the files to your sever and mount it somewhere.
+1. **Download Backup :** Ensure you have the physical backup ready before starting the restoration.
+	- For **EBS/Disk Snapshots**, create a volume from the snapshot and mount it on your server.
+	- For other backup types, download the backup files to your server and mount them as needed.
 
-2. **Drop Table :** Whichever table you want to import, you need to drop those tables first one by one.
+2. **Drop Tables:** Drop the tables you want to import by running the following command:
 
 	```
 	DROP TABLE <table-name>
 	``` 
 	⚠️ Caution: This permanently deletes the table and its data.
 
-3. **Recreate Tables from schema:** If you remember, we have dump the database schema to a file using `mysqldump` utility during physical backup. 
+3. **Recreate Tables from schema:** If you followed the backup steps, you would have dumped the database schema using `mysqldump`. To restore the table structure, we need to find the `CREATE TABLE` queries for the required tables in the `schema.sql` file and run them.
 
-	You need to find the schema for required tables from that `schema.sql` file and run that SQL query.
-	
-	 If you need help for extracting `CREATE TABLE` query for a table with regex, take a look [here](https://github.com/frappe/agent/blob/69084c59fda37e5ee08854e0a893d01116c2b303/agent/database_physical_restore.py#L387-L403). 
+	If you need help extracting the `CREATE TABLE` query using regex, refer to [code](https://github.com/frappe/agent/blob/69084c59fda37e5ee08854e0a893d01116c2b303/agent/database_physical_restore.py#L387-L403).
 
-4. **Restore Data :** Data restoration varies by storage engine. Let's see one by one.
+4. **Restore Data :** The restoration process depends on the storage engine. Let’s look at how we can restore data for each engine:
 	1. **InnoDB Restoration (Using Transportable Tablespaces)** 
-		- **Discard the tablespace :** 
+		- Discard the tablespace :
 			```
 			ALTER TABLE tabUser DISCARD TABLESPACE;
 			```
-			If you check inside the `/var/lib/mysql/<database-name>` folder, you will notice `tabUser.ibd` has been disappeared.
-		- **Copy backup files :**
+			After running this, you’ll see that the `tabUser.ibd` file is removed from `/var/lib/mysql/<database-name>`.
+		- Copy the backup files :
 		  Paste `tabUser.ibd` (data) + `tabUser.cfg` (metadata) from backup to the same folder.
 	    - **Import tablespace :**
 			```sql
 			ALTER TABLE tabUser IMPORT TABLESPACE;	
 			```
-		 If the above step gets completed, that means you have successfully imported the data to that live database.
+		 If this step is successful, the data is restored to the live database.
 
 	2. **MyISAM Restoration :**
 		- Acquire a write lock on the table.
-		- Copy these files from backup to `/var/lib/mysql/<database-name>`:
-			- `*.MYI` (index)
-			- `*.MYD` (data)
-
-6. Physical  Restoration Completed 🤞
+		- Copy the backup files (`*.MYI` for index and `*.MYD` for data) to the `/var/lib/mysql/<database-name>` folder.
+5. Physical  Restoration Completed 🤞
 
 ---
 
 ### Problems and Solutions
 
-While physical backup/restore solves performance issues and seems straightforward in theory, we quickly discovered real-world challenges when implementing it on Frappe Cloud for medium-sized sites. Unexpected failures began occurring during our initial tests.
+While physical backup and restoration offer performance benefits and seem straightforward in theory, we faced several real-world challenges when implementing it on Frappe Cloud for medium-sized sites. During our initial tests, unexpected failures began to occur.
 
-To properly test the method, We ended up writing a Bulk Backup and Restoration Tool in FC for finding out maximum possible bugs in this process. 
+To thoroughly test the method, we developed a Bulk Backup and Restoration Tool in Frappe Cloud. This allowed us to identify and resolve potential bugs in the process.
 
-Everyday we take 40~50 backups and restore the data multiple times in a dummy site.
+Every day, we took 40-50 backups and restore the data multiple times on a dummy site to ensure everything works smoothly.
 
 ![](https://frappe.io/files/bulk-restore-tool.png)
 
 
+
+#### Slow File Copy Due to Lazy Loading
+
+When restoring physical backups, copying files from the backup disk to the main disk is a critical process. During testing, we noticed two things that were holding us back:
+
+- 10GB of files took around 16 minutes.
+- The max transfer speed was capped at about 15MBPS.
+
+**Root Cause**
+
+The issue stemmed from AWS’s provisioning of volumes from snapshots. While the volume is created instantly, it doesn’t provide the expected performance due to lazy loading. Initially, the EBS volume is in an uninitialized state, so it loads disk blocks only when requested.
+
+![](https://frappe.io/files/ebs-lazy-loading.png)
+
+This meant we couldn't cross 15MBPS read speed, which was a big bottleneck.
+
+**Failed Experiments**
+
+We tried a few things to fix the issue but didn’t get the results we wanted:
+
+1. **AWS’s Recommended Pre-Warming Process**: AWS suggests using `dd` or `fio` to pre-warm your volume. However, we couldn’t push the speed beyond 15-20 MBPS due to the sequential read nature of `dd`.
+2. **Parallel `dd` Processes**: Next, we thought about running 5 `dd` processes in parallel to get to around 80MBPS. But this approach led to:
+        - Severe CPU overhead
+        - High iowait congestion
+
+**The Solution: io_uring**
+
+After some digging, we came across a solution - io_uring, a Linux feature that supports asynchronous I/O operations. To leverage this, we built a custom tool in golang with a python wrapper for easy integration.
+
+With io_uring, we managed to achieve nearly 300MBPS disk throughput at pre-warm stage (almost 90% of what the EBS gp3 disk was capable of) without the heavy CPU load.
+
+**Results**
+
+The warm-up time for 10GB of files dropped dramatically from 16 minutes to just 1 minute.
+
+If you want, you can install the library from PyPI and tryout: [filewarmer](https://pypi.org/project/filewarmer/). Also, if you want to dive deeper into io_uring, check out this  [blog post by Mattermost](https://mattermost.com/blog/iouring-and-go/).
+#### The Snapshot Availability Bottleneck
+
+While AWS EBS snapshots are created instantly, they’re unusable until the status changes from **`Pending`** → **`Available`**.
+
+**What’s Happening Behind the Scenes?**
+
+- AWS takes a snapshot of your disk and stores the data in Cold Storage/S3.
+- Duration depends on amount of changes in files on the disk since the last snapshot
+
+![](https://frappe.io/files/snapshot.png)
+
+At Frappe Cloud, we already keep 24-hour and 48-hour disk snapshots, which speeds up the process a bit - but not enough.
+
+To further reduce the time, we implemented a **Rolling Snapshot** strategy.
+
+Every 2 hours, Frappe Cloud takes a snapshot of all database server disks. Once the new snapshot becomes available, the older one is deleted. This approach has helped us reduce snapshot availability time by about **50%**.
+
 #### Missing \*.cfg files in Physical Backup
 
-We started seeing some failures where \*.cfg files are missing - preventing InnoDB table imports. This was confusing since AWS EBS Snapshots are supposed to be time consistent.
+We started encountering issues where \*.cfg* files were missing, preventing InnoDB table imports. This was puzzling, especially since AWS EBS Snapshots are supposed to be time-consistent.
 
-After some debugging, we found the root cause :
+After some debugging, we identified the problem :
 
-- MariaDB calls `fdatasync` after disk writes to flush data but it doesn't flush the metadata.
-- While the database wrote the \*.cfg files, their metadata remained in memory buffers.
-- Result: Snapshots captured 0-byte \*.cfg files
+- MariaDB uses `fdatasync` to flush data to disk, but it doesn’t flush the metadata.
+- While the \*.cfg files were written to disk, their metadata remained in buffers.
+- As a result, snapshots captured 0-byte \*.cfg files.
 
-**Solution -** To mitigate this issue, we did `fsync` for the required `cfg` files before taking the snapshot.
+To resolve this, we added an extra step: performing an `fsync` on the \*.cfg* files before taking the snapshot.
+
 
 ```python
 # Force metadata flush using fsync
@@ -220,19 +245,10 @@ with open(file_path, "rb", buffering=0) as f:
 	os.fsync(f.fileno())
 ```
 
-**Added Safeguards -** 
-
-1. During Backups:
-	- Store exact file sizes for all files
-	- Calculate checksums for all \*.cfg files
-2. During Restoration:
-	- Verify file sizes first
-	- Verify checksum of \*.cfg files
-	- Abort Restoration if any inconsistencies are detected
-
+dditionally, during backups, store exact file sizes and checksums for all \*.cfg files so that during restoration it can verify file sizes and checksums. If the process finds any mismatch, it will abort the restoration.
 #### Handle Broken MyISAM Tables
 
-MyISAM tables are prone to corruption. They corrupt easily but fortunately are just as easy to fix! 😅 
+MyISAM tables are prone to corruption. They can get corrupted easily, but luckily, they are just as easy to fix! 😅
 
 **Common reasons of corruption -**
 
@@ -240,146 +256,21 @@ MyISAM tables are prone to corruption. They corrupt easily but fortunately are j
 2. Unexpected database server crashes
 3. Hardware failure
 
-In most of the cases,
+In most cases, the index file (\.MYI*) becomes corrupted, but the data file (\*.MYD) stays safe.
 
-- The index file (**\*MYI**) got corrupted.
-- The data file (**\*MYD**) stays safe.
+MariaDB provides a utility called [`myisamchk`](https://mariadb.com/kb/en/myisamchk/) to check and fix corruption, and you don’t even need the database running to use it. Simply run:
 
-
-MyISAM comes with a utility called [`myisamchk`](https://mariadb.com/kb/en/myisamchk/) to check and fix corruption and you don't need to run database to do the fixtures.
-
-Just run,
 ```
 myisamchk -r /var/lib/mysql/_c8383gdu339jd8/__global_search
 ```
 
-It can solve 99% of problem. So, before attempting restoration we check for corruption in MyISAM table files and fix corruption.
+This tool can solve 99% of the issues. So, before attempting restoration, we always check for MyISAM table corruption and fix it. If the issue persists, we won’t attempt the restoration.
 
-If that fails, we will not attempt restoration.
-
-After restoration also, we found some instances where MyISAM Table was marked as corrupted.
+After restoration, we sometimes encounter instances where MyISAM tables are still marked as corrupted.
 
 ![](https://frappe.io/files/myisam-corruption.png)
 
-In this MyISAM restoration procedure, we just copy files. That doesn't update the index position and some metadatas.
-
-So after restoration we check for corruption using
-
-```
-CHECK TABLE <table-name>
-```
-
-If we find any error, we will repair that using
-```
-REPAIR TABLE <table-name>
-```
-
-> We are using `CHECK TABLE` instead of `myisamchk` in post-restoration phase because it's unsafe to use `myismchk` tool while database is running.
-
-#### The FULLTEXT Index Restoration Challenge
-
-Unlike Logical Restoration, In Physical Restoration we have the ability to restore table indexes as well. We don't need to recreate those.
-
-But, FULLTEXT indexes are not like other B-Tree indexes -
-
-- It has its own data structure.
-- Store index data in `FTS_xxxxxxxx.ibd` files.
-- Doesn't support `FLUSH TABLES ... FOR EXPORT`, so it can't be restored back ([docs](https://dev.mysql.com/doc/refman/8.4/en/innodb-table-import.html)).
-
-So the initial solution was -
-
-1. Drop the FULLTEXT Index
-2. Recreate it
-
-**Result:** Instant database crash 💀 at the time of fulltext index recreation (even with 4GB `innodb_buffer_pool_size` for a 12MB table!).
-
-![](https://frappe.io/files/innodb-fts-index-issue.png)
-
-**The Root Cause**
-
-- `DROP INDEX` only updates metadata ([docs](https://dev.mysql.com/doc/refman/8.4/en/innodb-table-import.html))
-- Orphaned FULLTEXT index metadata remained in the tablespace
-- Recreating the index collided with some metadata in tablespace and end-up crashing the database server.
-
-**The Fix**
-```sql
--- 1. Remove the corrupted index
-ALTER TABLE your_table DROP INDEX fulltext_index_name;
-
--- 2. Force to fix corruption in innodb table or indexes
-OPTIMIZE TABLE your_table;
-
--- 3. Add FULLTEXT index back
-ALTER TABLE your_table ADD FULLTEXT(fulltext_index_name) (columns);
-```
-
-**Why it works ?**
-
-- `OPTIMIZE TABLE` repairs/rebuild innodb table and fix corrupted indexes
-- Then it acts as a "clean slate" for FULLTEXT index recreation
-
-This solution worked flawlessly 😀.
-
-#### The Snapshot Availability Bottleneck
-
-While AWS EBS snapshots are created instantly, they’re unusable until the status changes from **`Pending`** → **`Available`**.
-
-**What’s Happening Behind the Scenes?**
-
-- AWS snapshot your disk and moves snapshot data to Cold Storage / S3
-- Duration depends on **delta** from the last snapshot
-
-![](https://frappe.io/files/snapshot.png)
-
-Since Frappe Cloud already keeps **24hr** & **48hr** disk snapshots that make this process bit faster, but not much.
-
-To make it more faster, we have implemented **Rolling Snapshot**. 
-
-Every 2hr, FC will take a snapshot of all the database servers disk and once the new snapshot become available, we will delete the older one.
-
-This process helps to reduce the Snapshot availability time by ~50%
-
-#### Slow File Copy Due to Lazy Loading
-
-Copying file from backup disk to main disk is one of the main process of physical backup restoration. We start noticing two things :
-
-- 10GB of files took ~16 minutes
-- Max speed capped at ~5MBPS
-
-**Root Cause**
-
-AWS provision volume from snapshot instantly but it can't provide expected performance due to lazy loading.
-
-Initially, EBS volume is on uninitialized state. It loads the disk blocks as on demand.
-
-![](https://frappe.io/files/ebs-lazy-loading.png)
-
-For this, we are not able to cross more than ~5MBPS read speed. 
-
-**Failed Experiments**
-
-1. **AWS-recommended process for pre-warming -** AWS suggests to use `dd` or `fio` to pre-warm your volume ([ref](https://docs.aws.amazon.com/ebs/latest/userguide/ebs-initialize.html)). But, we are not able to cross more than 15~20 MBPS read speed due to sequential read of `dd`.
-2. **Parallel `dd` processes -**  We thought let's run 5 dd process parallaly to get ~80MBPS speed. But, that causes -
-        - Severe CPU overhead
-        - High iowait congestion
-
-**The Solution: io_uring**
-
-We built a custom library leveraging Linux’s [`io_uring`](https://en.wikipedia.org/wiki/Io_uring) which provides support for asynchronous IO.
-
-The tool is written in **Golang** and we wrote a python wrapper to make it easy to integrate.
-
-Thus, we are able to cross almost ~300MBPS (90% of EBS gp3 disk) speed at pre-warm stage without much cpu overhead.
-
-**Results**
-
-Warmup time for 10GB files reduced from **16min** → **1min**
-
-We have published the library on pypi, you can take a look here - [filewarmer](https://pypi.org/project/filewarmer/)
-
-If you want to know more about io_uring, check this [blog by mattermost](https://mattermost.com/blog/iouring-and-go/).
-
-
+Since the MyISAM restoration procedure only involves copying files (without updating index positions or metadata), we also check for corruption afterward using `CHECK TABLE`. If we find any issue in that use `REPAIR TABLE <table-name> USE_FRM` to fix the issues,
 
 ### Benefits of Physical Backup
 
