@@ -56,7 +56,7 @@ This works fine.
 
 ### Simple Solution - Disk Snapshot
 
-Taking a disk snapshot of the database server, such as AWS EBS or ZFS Snapshot, is a quick process that usually takes just a few seconds. Technically, this is considered a physical backup of the database.
+Taking a disk snapshot of the database server, such as an AWS EBS or ZFS Snapshot, is a quick and efficient process. It typically takes just a few seconds and is considered a physical backup of the database. On the surface, this seems like a straightforward and effective solution for creating backups.
 
 However, there’s an issue with this approach. A running database server always has data in memory. If you take a snapshot without stopping the database, it can result in corrupted files. To avoid this, the database needs to be stopped before taking a snapshot.
 
